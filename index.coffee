@@ -8,15 +8,25 @@ module.exports =
       plist = editor.getPath()
       {scopeName} = editor.getGrammar()
 
-      if /\.(plist|strings)$/.test(scopeName) and
-        editor.buffer?.getLines()[0]?.startsWith 'bplist00'
+      #console.log "MyTest:", editor.getTitle(), plist
 
+      if  editor.buffer?.getLines()[0]?.startsWith 'bplist00'
           # Decompile from binary to XML for editing.
           {stdout} = exec "plutil -convert xml1 -o - '#{plist}'"
-          stdout.on 'data', (XML) -> editor.setText XML
+          editor.setText ""
+          editor.setGrammar(atom.grammars.grammarForScopeName 'text.xml.plist')
+          stdout.on 'data', (XML) ->
+            myBuffer = editor.getText() + XML
+            editor.setText myBuffer
 
           editor.onDidDestroy -> # Recompile binary from XML.
             exec "plutil -convert binary1 '#{plist}'"
+
+          #editor.onDidSave ->
+          #  myBuffer = editor.getText()
+          #  console.log "OnSave: ", myBuffer
+          #  exec "plutil -convert binary1 '#{plist}'"
+          #  editor.setText myBuffer
 
 #-------------------------------------------------------------------------------
   deactivate: -> @subs.dispose()
